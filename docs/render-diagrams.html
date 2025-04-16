@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>K8s-Ingress-Meta-Sync Diagrams</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1, h2, h3 {
+            color: #333;
+        }
+        .diagram-container {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .mermaid {
+            font-size: 16px;
+        }
+        .buttons {
+            margin: 10px 0;
+        }
+        button {
+            padding: 8px 16px;
+            background-color: #0066cc;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #0055aa;
+        }
+        .description {
+            margin: 20px 0;
+        }
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>K8s-Ingress-Meta-Sync Architecture Diagrams</h1>
+    <p>This page renders the architecture diagrams for the K8s-Ingress-Meta-Sync project using the Mermaid library.</p>
+    
+    <h2>Architecture Overview</h2>
+    <div class="diagram-container">
+        <div class="mermaid" id="architecture-overview">
+            graph TD
+                subgraph "K8s Cluster"
+                    A[K8s-Ingress-Meta-Sync Controller] --> B[Provider Subsystem]
+                    A --> C[Ingress Subsystem]
+                    A --> D[Reconciliation Engine]
+                    
+                    B --> B1[GitHub Provider]
+                    B --> B2[AWS Provider]
+                    B --> B3[Provider Interface]
+                    
+                    C --> C1[Cloudflare Ingress]
+                    C --> C2[Istio Ingress]
+                    C --> C3[Ingress Interface]
+                    
+                    D --> D1[Controller Logic]
+                    D --> D2[IP Range Differ]
+                    D --> D3[Event Logger]
+
+                    E[Custom Resources] --> E1[ProviderConfig CRD]
+                    E --> E2[IngressConfig CRD]
+                    E --> E3[SyncConfig CRD]
+                end
+
+                F[GitHub API] <--> B1
+                G[AWS IP Service] <--> B2
+                H[Cloudflare API] <--> C1
+                I[Istio Gateway] <--> C2
+
+                style B2 stroke-dasharray: 5 5
+                style G stroke-dasharray: 5 5
+
+                classDef external fill:#f9f,stroke:#333,stroke-width:2px;
+                class F,G,H,I external;
+        </div>
+        <div class="buttons">
+            <button onclick="saveSvg('architecture-overview', 'architecture-overview.svg')">Save as SVG</button>
+            <button onclick="savePng('architecture-overview', 'architecture-overview.png')">Save as PNG</button>
+        </div>
+        <div class="description">
+            <p>This diagram shows the overall architecture of the K8s-Ingress-Meta-Sync system. The controller has three main subsystems:</p>
+            <ol>
+                <li><strong>Provider Subsystem</strong>: Responsible for fetching IP ranges from different sources</li>
+                <li><strong>Ingress Subsystem</strong>: Responsible for applying IP ranges to different ingress services</li>
+                <li><strong>Reconciliation Engine</strong>: Manages the synchronization process</li>
+            </ol>
+        </div>
+    </div>
+
+    <h2>Component Diagram</h2>
+    <div class="diagram-container">
+        <div class="mermaid" id="component-diagram">
+            graph TD
+                subgraph "Kubernetes Cluster"
+                    subgraph "Controller"
+                        A[Reconciliation Loop] --> B[Provider Manager]
+                        A --> C[Ingress Manager]
+                        A --> D[IP Range Differ]
+                        
+                        B --> B1[Provider Registry]
+                        B1 --> B1_1[GitHub Provider]
+                        B1 --> B1_2[AWS Provider]
+                        
+                        C --> C1[Ingress Registry]
+                        C1 --> C1_1[Cloudflare Ingress]
+                        C1 --> C1_2[Istio Ingress]
+                        
+                        D --> D1[IPRangeSet]
+                        D1 --> D1_1[Add/Remove Detection]
+                    end
+                    
+                    subgraph "API Objects"
+                        E[ProviderConfig]
+                        F[IngressConfig]
+                        G[SyncConfig]
+                        
+                        G --> E
+                        G --> F
+                    end
+                    
+                    A --> G
+                    B --> E
+                    C --> F
+                end
+                
+                subgraph "External Systems"
+                    H[GitHub API] <--> B1_1
+                    I[AWS IP Service] <--> B1_2
+                    J[Cloudflare API] <--> C1_1
+                    K[Istio Gateway API] <--> C1_2
+                end
+                
+                style B1_2 stroke-dasharray: 5 5
+                style I stroke-dasharray: 5 5
+                
+                classDef controller fill:#e1f5fe,stroke:#01579b,stroke-width:2px;
+                classDef apiobjects fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px;
+                classDef external fill:#ffebee,stroke:#b71c1c,stroke-width:2px;
+                
+                class A,B,C,D,B1,B1_1,B1_2,C1,C1_1,C1_2,D1,D1_1 controller;
+                class E,F,G apiobjects;
+                class H,I,J,K external;
+        </div>
+        <div class="buttons">
+            <button onclick="saveSvg('component-diagram', 'component-diagram.svg')">Save as SVG</button>
+            <button onclick="savePng('component-diagram', 'component-diagram.png')">Save as PNG</button>
+        </div>
+        <div class="description">
+            <p>This diagram details the component architecture of the K8s-Ingress-Meta-Sync controller:</p>
+            <ol>
+                <li><strong>Reconciliation Loop</strong>: The core workflow that processes SyncConfig resources</li>
+                <li><strong>Provider Manager</strong>: Manages provider instances and their lifecycle</li>
+                <li><strong>Ingress Manager</strong>: Manages ingress service instances and their lifecycle</li>
+                <li><strong>IP Range Differ</strong>: Compares IP range sets to identify changes</li>
+                <li><strong>API Objects</strong>: Kubernetes custom resources that define the configuration</li>
+            </ol>
+        </div>
+    </div>
+
+    <h2>Reconciliation Workflow</h2>
+    <div class="diagram-container">
+        <div class="mermaid" id="reconciliation-workflow">
+            sequenceDiagram
+                participant C as Controller
+                participant P as Provider (GitHub)
+                participant D as Differ
+                participant I as Ingress (Cloudflare/Istio)
+                participant K as Kubernetes API
+                
+                C->>K: Watch SyncConfig changes
+                activate C
+                
+                Note over C: Reconciliation begins
+                
+                C->>K: Get SyncConfig
+                K-->>C: SyncConfig
+                
+                loop For each provider in SyncConfig
+                    C->>K: Get ProviderConfig
+                    K-->>C: ProviderConfig
+                    
+                    C->>P: Init provider
+                    P-->>C: Provider instance
+                    
+                    C->>P: Fetch IP ranges
+                    P-->>C: IP ranges
+                    
+                    Note over C,P: Apply include/exclude filters
+                end
+                
+                Note over C: Merge IP ranges from all providers
+                
+                loop For each ingress in SyncConfig
+                    C->>K: Get IngressConfig
+                    K-->>C: IngressConfig
+                    
+                    C->>I: Init ingress
+                    I-->>C: Ingress instance
+                    
+                    C->>I: Get current IP ranges
+                    I-->>C: Current IP ranges
+                    
+                    C->>D: Compare IP ranges
+                    D-->>C: Added/removed ranges
+                    
+                    alt IP ranges changed
+                        C->>I: Apply IP ranges
+                        I-->>C: Update status
+                    end
+                end
+                
+                C->>K: Update SyncConfig status
+                
+                Note over C: Schedule next reconciliation
+                
+                deactivate C
+        </div>
+        <div class="buttons">
+            <button onclick="saveSvg('reconciliation-workflow', 'reconciliation-workflow.svg')">Save as SVG</button>
+            <button onclick="savePng('reconciliation-workflow', 'reconciliation-workflow.png')">Save as PNG</button>
+        </div>
+        <div class="description">
+            <p>This sequence diagram illustrates the detailed workflow of the reconciliation process:</p>
+            <ol>
+                <li><strong>Initialization</strong>: The controller watches for changes to SyncConfig resources</li>
+                <li><strong>Provider Processing</strong>: Process each provider configured in the SyncConfig</li>
+                <li><strong>IP Range Merging</strong>: Combine IP ranges from all providers into a single set</li>
+                <li><strong>Ingress Processing</strong>: Process each ingress configured in the SyncConfig</li>
+                <li><strong>Status Update</strong>: Update the SyncConfig status with results</li>
+                <li><strong>Scheduling</strong>: Schedule the next reconciliation based on polling intervals</li>
+            </ol>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>K8s-Ingress-Meta-Sync Architecture Diagrams | Generated with Mermaid.js</p>
+    </div>
+
+    <script>
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            fontSize: 16
+        });
+
+        function saveSvg(id, filename) {
+            // Get the diagram's SVG content
+            const svgElement = document.querySelector(`#${id} svg`);
+            const svgContent = new XMLSerializer().serializeToString(svgElement);
+            
+            // Create a Blob from the SVG content
+            const blob = new Blob([svgContent], { type: 'image/svg+xml' });
+            
+            // Create a download link and trigger the download
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            link.click();
+            
+            // Clean up
+            URL.revokeObjectURL(link.href);
+        }
+
+        function savePng(id, filename) {
+            // Get the SVG element
+            const svgElement = document.querySelector(`#${id} svg`);
+            const svgContent = new XMLSerializer().serializeToString(svgElement);
+            
+            // Create a canvas element
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Create an image element to draw the SVG to canvas
+            const img = new Image();
+            
+            // Set up the image load handler
+            img.onload = function() {
+                // Set canvas dimensions to match the SVG
+                canvas.width = img.width;
+                canvas.height = img.height;
+                
+                // Draw the image to the canvas
+                ctx.drawImage(img, 0, 0);
+                
+                // Create a PNG and download it
+                const link = document.createElement('a');
+                link.href = canvas.toDataURL('image/png');
+                link.download = filename;
+                link.click();
+                
+                // Clean up
+                URL.revokeObjectURL(link.href);
+            };
+            
+            // Set the image source to the SVG
+            img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgContent)));
+        }
+    </script>
+</body>
+</html>

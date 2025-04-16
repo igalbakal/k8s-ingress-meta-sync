@@ -1,0 +1,147 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: ingressconfigs.ingress-meta-sync.k8s.io
+spec:
+  group: ingress-meta-sync.k8s.io
+  names:
+    kind: IngressConfig
+    listKind: IngressConfigList
+    plural: ingressconfigs
+    singular: ingressconfig
+    shortNames:
+      - ingress
+  scope: Cluster
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      additionalPrinterColumns:
+        - jsonPath: .spec.type
+          name: Type
+          type: string
+        - jsonPath: .metadata.creationTimestamp
+          name: Age
+          type: date
+        - jsonPath: .status.lastSuccessfulSync
+          name: "Last Sync"
+          type: date
+        - jsonPath: .status.ipRangesCount
+          name: "IP Ranges"
+          type: integer
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            apiVersion:
+              type: string
+            kind:
+              type: string
+            metadata:
+              type: object
+            spec:
+              type: object
+              required: ["type"]
+              properties:
+                type:
+                  type: string
+                  enum: ["cloudflare", "istio"]
+                cloudflare:
+                  type: object
+                  properties:
+                    api:
+                      type: object
+                      required: ["secretRef"]
+                      properties:
+                        secretRef:
+                          type: object
+                          required: ["name", "namespace"]
+                          properties:
+                            name:
+                              type: string
+                            namespace:
+                              type: string
+                            key:
+                              type: string
+                    ruleConfig:
+                      type: object
+                      required: ["zoneId", "ruleName"]
+                      properties:
+                        zoneId:
+                          type: string
+                        ruleName:
+                          type: string
+                        description:
+                          type: string
+                        action:
+                          type: string
+                          default: "allow"
+                        priority:
+                          type: integer
+                    updateStrategy:
+                      type: string
+                      enum: ["direct", "incremental"]
+                      default: "direct"
+                istio:
+                  type: object
+                  properties:
+                    namespace:
+                      type: string
+                      default: "istio-system"
+                    xForwardedForConfig:
+                      type: object
+                      properties:
+                        enabled:
+                          type: boolean
+                          default: true
+                        headerName:
+                          type: string
+                          default: "X-Forwarded-For"
+                    gatewaySelector:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                          default: "ingressgateway"
+                        namespace:
+                          type: string
+                        labels:
+                          type: object
+                          additionalProperties:
+                            type: string
+            status:
+              type: object
+              properties:
+                lastSyncTime:
+                  type: string
+                  format: date-time
+                lastSuccessfulSync:
+                  type: string
+                  format: date-time
+                ipRangesCount:
+                  type: integer
+                  minimum: 0
+                lastSyncError:
+                  type: string
+                conditions:
+                  type: array
+                  items:
+                    type: object
+                    required: ["type", "status"]
+                    properties:
+                      type:
+                        type: string
+                      status:
+                        type: string
+                        enum: ["True", "False", "Unknown"]
+                      observedGeneration:
+                        type: integer
+                      lastTransitionTime:
+                        type: string
+                        format: date-time
+                      reason:
+                        type: string
+                      message:
+                        type: string
+      subresources:
+        status: {}

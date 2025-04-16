@@ -1,0 +1,133 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: providerconfigs.ingress-meta-sync.k8s.io
+spec:
+  group: ingress-meta-sync.k8s.io
+  names:
+    kind: ProviderConfig
+    listKind: ProviderConfigList
+    plural: providerconfigs
+    singular: providerconfig
+    shortNames:
+      - provider
+  scope: Cluster
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      additionalPrinterColumns:
+        - jsonPath: .spec.type
+          name: Type
+          type: string
+        - jsonPath: .metadata.creationTimestamp
+          name: Age
+          type: date
+        - jsonPath: .status.lastSuccessfulSync
+          name: "Last Sync"
+          type: date
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            apiVersion:
+              type: string
+            kind:
+              type: string
+            metadata:
+              type: object
+            spec:
+              type: object
+              required: ["type"]
+              properties:
+                type:
+                  type: string
+                  enum: ["github", "aws"]
+                github:
+                  type: object
+                  properties:
+                    enterprise:
+                      type: boolean
+                      default: true
+                    api:
+                      type: object
+                      required: ["secretRef"]
+                      properties:
+                        secretRef:
+                          type: object
+                          required: ["name", "namespace"]
+                          properties:
+                            name:
+                              type: string
+                            namespace:
+                              type: string
+                            key:
+                              type: string
+                    pollingInterval:
+                      type: string
+                      default: "1m"
+                      pattern: "^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$"
+                aws:
+                  type: object
+                  properties:
+                    api:
+                      type: object
+                      required: ["secretRef"]
+                      properties:
+                        secretRef:
+                          type: object
+                          required: ["name", "namespace"]
+                          properties:
+                            name:
+                              type: string
+                            namespace:
+                              type: string
+                            key:
+                              type: string
+                    services:
+                      type: array
+                      items:
+                        type: string
+                      default: ["AMAZON"]
+                    regions:
+                      type: array
+                      items:
+                        type: string
+                    pollingInterval:
+                      type: string
+                      default: "1m"
+                      pattern: "^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$"
+            status:
+              type: object
+              properties:
+                lastSyncTime:
+                  type: string
+                  format: date-time
+                lastSuccessfulSync:
+                  type: string
+                  format: date-time
+                failedAttempts:
+                  type: integer
+                  minimum: 0
+                conditions:
+                  type: array
+                  items:
+                    type: object
+                    required: ["type", "status"]
+                    properties:
+                      type:
+                        type: string
+                      status:
+                        type: string
+                        enum: ["True", "False", "Unknown"]
+                      observedGeneration:
+                        type: integer
+                      lastTransitionTime:
+                        type: string
+                        format: date-time
+                      reason:
+                        type: string
+                      message:
+                        type: string
+      subresources:
+        status: {}

@@ -1,0 +1,160 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: syncconfigs.ingress-meta-sync.k8s.io
+spec:
+  group: ingress-meta-sync.k8s.io
+  names:
+    kind: SyncConfig
+    listKind: SyncConfigList
+    plural: syncconfigs
+    singular: syncconfig
+    shortNames:
+      - sync
+  scope: Cluster
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      additionalPrinterColumns:
+        - jsonPath: .metadata.creationTimestamp
+          name: Age
+          type: date
+        - jsonPath: .status.lastSuccessfulSync
+          name: "Last Sync"
+          type: date
+        - jsonPath: .status.conditions[?(@.type=='Ready')].status
+          name: Status
+          type: string
+        - jsonPath: .status.conditions[?(@.type=='Ready')].message
+          name: Message
+          type: string
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            apiVersion:
+              type: string
+            kind:
+              type: string
+            metadata:
+              type: object
+            spec:
+              type: object
+              required: ["providers", "ingress"]
+              properties:
+                providers:
+                  type: array
+                  minItems: 1
+                  items:
+                    type: object
+                    required: ["name"]
+                    properties:
+                      name:
+                        type: string
+                      includeRanges:
+                        type: array
+                        items:
+                          type: string
+                      excludeRanges:
+                        type: array
+                        items:
+                          type: string
+                ingress:
+                  type: array
+                  minItems: 1
+                  items:
+                    type: object
+                    required: ["name"]
+                    properties:
+                      name:
+                        type: string
+                syncPolicy:
+                  type: object
+                  properties:
+                    failureMode:
+                      type: string
+                      enum: ["continue", "fail"]
+                      default: "continue"
+                    retryConfig:
+                      type: object
+                      properties:
+                        maxRetries:
+                          type: integer
+                          minimum: 0
+                          default: 3
+                        backoffMultiplier:
+                          type: integer
+                          minimum: 1
+                          default: 2
+                        initialDelaySeconds:
+                          type: integer
+                          minimum: 1
+                          default: 5
+            status:
+              type: object
+              properties:
+                lastSyncTime:
+                  type: string
+                  format: date-time
+                lastSuccessfulSync:
+                  type: string
+                  format: date-time
+                providerStatus:
+                  type: array
+                  items:
+                    type: object
+                    required: ["name"]
+                    properties:
+                      name:
+                        type: string
+                      lastSyncTime:
+                        type: string
+                        format: date-time
+                      status:
+                        type: string
+                      ipRangesCount:
+                        type: integer
+                        minimum: 0
+                      error:
+                        type: string
+                ingressStatus:
+                  type: array
+                  items:
+                    type: object
+                    required: ["name"]
+                    properties:
+                      name:
+                        type: string
+                      lastSyncTime:
+                        type: string
+                        format: date-time
+                      status:
+                        type: string
+                      ipRangesCount:
+                        type: integer
+                        minimum: 0
+                      error:
+                        type: string
+                conditions:
+                  type: array
+                  items:
+                    type: object
+                    required: ["type", "status"]
+                    properties:
+                      type:
+                        type: string
+                      status:
+                        type: string
+                        enum: ["True", "False", "Unknown"]
+                      observedGeneration:
+                        type: integer
+                      lastTransitionTime:
+                        type: string
+                        format: date-time
+                      reason:
+                        type: string
+                      message:
+                        type: string
+      subresources:
+        status: {}

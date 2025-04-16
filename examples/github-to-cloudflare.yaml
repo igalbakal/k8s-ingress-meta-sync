@@ -1,0 +1,82 @@
+---
+# Provider configuration for GitHub
+apiVersion: ingress-meta-sync.k8s.io/v1alpha1
+kind: ProviderConfig
+metadata:
+  name: github-ip-ranges
+spec:
+  type: github
+  github:
+    # Set to true for GitHub Enterprise (default) or false for public GitHub
+    enterprise: true
+    api:
+      secretRef:
+        name: github-api-token
+        namespace: ingress-meta-sync-system
+    # Check for updates every 15 minutes
+    pollingInterval: 15m
+---
+# Secret for GitHub API token (optional)
+apiVersion: v1
+kind: Secret
+metadata:
+  name: github-api-token
+  namespace: ingress-meta-sync-system
+type: Opaque
+stringData:
+  # Replace with your actual GitHub API token if needed
+  token: "your-github-api-token"
+---
+# Ingress configuration for Cloudflare
+apiVersion: ingress-meta-sync.k8s.io/v1alpha1
+kind: IngressConfig
+metadata:
+  name: cloudflare-ingress
+spec:
+  type: cloudflare
+  cloudflare:
+    api:
+      secretRef:
+        name: cloudflare-api-token
+        namespace: ingress-meta-sync-system
+    ruleConfig:
+      # Replace with your Cloudflare Zone ID
+      zoneId: "your-cloudflare-zone-id"
+      ruleName: "github-ip-ranges"
+      description: "GitHub IP ranges automatically managed by ingress-meta-sync"
+      action: "allow"
+      priority: 100
+    updateStrategy: "direct"
+---
+# Secret for Cloudflare API token
+apiVersion: v1
+kind: Secret
+metadata:
+  name: cloudflare-api-token
+  namespace: ingress-meta-sync-system
+type: Opaque
+stringData:
+  # Replace with your actual Cloudflare API token
+  token: "your-cloudflare-api-token"
+---
+# SyncConfig to connect GitHub provider with Cloudflare ingress
+apiVersion: ingress-meta-sync.k8s.io/v1alpha1
+kind: SyncConfig
+metadata:
+  name: github-to-cloudflare
+spec:
+  providers:
+    - name: github-ip-ranges
+      # Optional: only include specific IP ranges
+      includeRanges:
+        - "web"
+        - "api"
+        - "git"
+  ingress:
+    - name: cloudflare-ingress
+  syncPolicy:
+    failureMode: continue
+    retryConfig:
+      maxRetries: 3
+      backoffMultiplier: 2
+      initialDelaySeconds: 5

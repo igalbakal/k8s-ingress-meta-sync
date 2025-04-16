@@ -1,0 +1,70 @@
+---
+# Provider configuration for GitHub
+apiVersion: ingress-meta-sync.k8s.io/v1alpha1
+kind: ProviderConfig
+metadata:
+  name: github-ip-ranges
+spec:
+  type: github
+  github:
+    # Set to true for GitHub Enterprise (default) or false for public GitHub
+    enterprise: true
+    api:
+      secretRef:
+        name: github-api-token
+        namespace: ingress-meta-sync-system
+    # Check for updates every 15 minutes
+    pollingInterval: 15m
+---
+# Secret for GitHub API token (optional)
+apiVersion: v1
+kind: Secret
+metadata:
+  name: github-api-token
+  namespace: ingress-meta-sync-system
+type: Opaque
+stringData:
+  # Replace with your actual GitHub API token if needed
+  token: "your-github-api-token"
+---
+# Ingress configuration for Istio with x-forwarded-for header handling
+apiVersion: ingress-meta-sync.k8s.io/v1alpha1
+kind: IngressConfig
+metadata:
+  name: istio-ingress
+spec:
+  type: istio
+  istio:
+    namespace: istio-system
+    # Configure x-forwarded-for header handling
+    xForwardedForConfig:
+      enabled: true
+      headerName: "X-Forwarded-For"
+    # Configure which Istio gateway to target
+    gatewaySelector:
+      name: "ingressgateway"
+      namespace: "istio-system"
+      labels:
+        app: "istio-ingressgateway"
+---
+# SyncConfig to connect GitHub provider with Istio ingress
+apiVersion: ingress-meta-sync.k8s.io/v1alpha1
+kind: SyncConfig
+metadata:
+  name: github-to-istio
+spec:
+  providers:
+    - name: github-ip-ranges
+      # Optional: only include specific IP ranges
+      includeRanges:
+        - "web"
+        - "api"
+        - "git"
+  ingress:
+    - name: istio-ingress
+  syncPolicy:
+    failureMode: continue
+    retryConfig:
+      maxRetries: 3
+      backoffMultiplier: 2
+      initialDelaySeconds: 5
