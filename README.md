@@ -6,14 +6,14 @@ A Kubernetes controller that dynamically syncs SaaS Cloud provider IP ranges to 
 
 ## Overview
 
-SaaS providers (GitHub, AWS, etc.) frequently update the IP ranges used by their services. This creates a challenge for organizations that need to maintain accurate firewall rules, ingress configurations, and security policies.
+SaaS providers (GitHub, AWS, etc.) frequently update the IP ranges origin their services. This creates a challenge for organizations that need to maintain accurate firewall rules, ingress configurations, and security policies incresing attack vectors velocity.
 
 **K8s Ingress Meta Sync** solves this problem by:
 
-1. Continuously monitoring IP range metadata from SaaS providers
+1. Continuously monitoring IP range metadata services, published by SaaS providers
 2. Detecting changes in published IP ranges
-3. Automatically updating ingress services (Cloudflare, Istio) with the latest IP ranges
-4. Supporting X-Forwarded-For header enrichment for proper client IP tracking
+3. Automatically and ideomatically updating ingress layer 7 components (Cloudflare App FW, Istio) rules accordingly.
+4. Supporting X-Forwarded-For header enrichment for proper origin client IP tracking
 
 ## Features
 
